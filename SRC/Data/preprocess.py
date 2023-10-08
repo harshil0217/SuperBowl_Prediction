@@ -10,11 +10,13 @@ game_data
 game_data = pd.melt(game_data, id_vars = game_data.columns[0:3], value_vars = game_data.columns[3:39], var_name = "stat", value_name = "stat_value")
 
 game_data
+game_data.to_csv("temp4.csv")
 game_data
 
 game_data = pd.melt(game_data, id_vars = ["date", "stat", "stat_value"], value_vars = ["away", "home"], var_name = "status", value_name = "team")
 
 game_data
+game_data.to_csv("temp3.csv")
 game_data
 
 from utils import filter_home_away_stats
@@ -23,7 +25,8 @@ game_data = filter_home_away_stats(game_data)
 game_data.reset_index(drop = True, inplace= True)
 game_data
 
-
+game_data.to_csv("temp1.csv")
+game_data.head()
 
 game_data = game_data.drop(["status"], axis = 1)
 
@@ -37,8 +40,8 @@ game_data = game_data.pivot(index = ["date", "team"], columns = "stat", values =
 
 game_data
 
+game_data = game_data.reset_index(drop = True)
 
-
-
+game_data
 
 
