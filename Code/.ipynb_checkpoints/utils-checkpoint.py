@@ -123,11 +123,11 @@ def postseason_helper(x, date_col):
     date = x[date_col]
     season = 0
     for key, value in season_timeframes.items():
-        if value[0] <= date <= value[1]:
+        if value[0] <= date.date() <= value[1]:
             season = key
             break
     dates = regular_season_timeframes[season]
-    if dates[0] <= date <= dates[1]:
+    if dates[0] <= date.date() <= dates[1]:
         return True
     return False
         
@@ -203,3 +203,47 @@ def add_superbowl(data, year_col, team_col):
     return data
 
 
+# +
+import pandas as pd
+
+nfl_conf_champs = {
+    2002: ['Buccaneers', 'Eagles', 'Raiders', 'Titans'],
+    2003: ['Panthers', 'Patriots', 'Colts', 'Chiefs'],
+    2004: ['Patriots', 'Steelers', 'Falcons', 'Eagles'],
+    2005: ['Seahawks', 'Panthers', 'Broncos', 'Steelers'],
+    2006: ['Bears', 'Saints', 'Patriots', 'Colts'],
+    2007: ['Giants', 'Packers', 'Chargers', 'Patriots'],
+    2008: ['Cardinals', 'Eagles', 'Ravens', 'Steelers'],    
+    2009: ['Saints', 'Vikings', 'Colts', 'Jets'],
+    2010: ['Packers', 'Bears', 'Steelers', 'Jets'],
+    2011: ['Giants', '49ers', 'Ravens', 'Patriots'],
+    2012: ['49ers', 'Falcons', 'Ravens', 'Patriots'],
+    2013: ['Seahawks', '49ers', 'Broncos', 'Patriots'],
+    2014: ['Seahawks', 'Packers', 'Patriots', 'Colts'],
+    2015: ['Panthers', 'Cardinals', 'Broncos', 'Patriots'],
+    2016: ['Falcons', 'Packers', 'Steelers', 'Patriots'],
+    2017: ['Eagles', 'Vikings', 'Jaguars', 'Patriots'],
+    2018: ['Rams', 'Saints', 'Chiefs', 'Patriots'],
+    2019: ['49ers', 'Packers', 'Chiefs', 'Titans'],
+    2020: ['Buccaneers', 'Packers', 'Bills', 'Chiefs'],
+    2021: ['Rams', '49ers', 'Bengals', 'Chiefs'],
+    2022: ['Eagles', '49ers', 'Bengals', 'Chiefs']
+}
+
+
+# -
+
+def conf_helper(x, year_col, team_col):
+    year = x[year_col]
+    team = x[team_col]
+    winners = nfl_conf_champs[year]
+    if team in winners:
+        return 1
+    else:
+        return 0
+
+
+def add_conf(data, year_col, team_col):
+    superbowl = data.apply(lambda x: conf_helper(x, year_col, team_col), axis = 1)
+    data["Made_Conf_Fin"] = superbowl
+    return data

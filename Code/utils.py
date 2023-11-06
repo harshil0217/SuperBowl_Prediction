@@ -123,11 +123,11 @@ def postseason_helper(x, date_col):
     date = x[date_col]
     season = 0
     for key, value in season_timeframes.items():
-        if value[0] <= date <= value[1]:
+        if value[0] <= date.date() <= value[1]:
             season = key
             break
     dates = regular_season_timeframes[season]
-    if dates[0] <= date <= dates[1]:
+    if dates[0] <= date.date() <= dates[1]:
         return True
     return False
         

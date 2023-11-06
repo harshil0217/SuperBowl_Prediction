@@ -100,17 +100,17 @@ game_data
 # +
 from utils import add_superbowl
 
-#game_data = add_superbowl(game_data, "date", "team")
-#game_data
+game_data = add_superbowl(game_data, "date", "team")
+game_data
 # -
-
+game_data = game_data.drop(["drives", "rushing_attempts", "comp_perc", "third_down_conversion_rate" ], axis = 1)
 
 
 # +
-from utils import add_conf
+#from utils import add_conf
 
-game_data = add_conf(game_data, "date", "team")
-game_data
+#game_data = add_conf(game_data, "date", "team")
+#game_data
 # -
 
 game_data.to_csv("..//Data/Processed_Data/game_data.csv", index = False)

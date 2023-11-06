@@ -9,10 +9,12 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedShuffleSplit
 import statsmodels.api as sm
 from sklearn.ensemble import RandomForestClassifier
+from imblearn.over_sampling import SMOTE
 
 
 
 game_data = pd.read_csv("../Data/Processed_Data/game_data.csv")
+
 
 game_data
 
@@ -26,32 +28,42 @@ atts = game_stats.columns
 len(game_stats)
 
 game_stats
-wins = game_stats[game_stats["Made_Conf_Fin"] == 1]
+wins = game_stats[game_stats["Superbowl Status"] == 1]
 len(wins)/len(game_stats)
+
 
 # +
 split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.2, random_state = 69)
 
-for train_index, test_index in split.split(game_stats, game_stats["Made_Conf_Fin"]):
+for train_index, test_index in split.split(game_stats, game_stats["Superbowl Status"]):
     game_train = game_stats.loc[train_index]
     game_test = game_stats.loc[test_index]
 
     
 
 
-sb_train = game_train["Made_Conf_Fin"]
-sb_test = game_test["Made_Conf_Fin"]
+sb_train = game_train["Superbowl Status"]
+sb_test = game_test["Superbowl Status"]
 
-game_train = game_train.drop(["Made_Conf_Fin"], axis = 1)
-game_test = game_test.drop(["Made_Conf_Fin"], axis = 1)
+game_train = game_train.drop(["Superbowl Status"], axis = 1)
+game_test = game_test.drop(["Superbowl Status"], axis = 1)
 
 game_train
 # -
 
 game_test
 
-logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
-result = logit_model.fit()
+smote = SMOTE(random_state = 69)
+game_train, sb_train = smote.fit_resample(game_train, sb_train)
+
+
+
+
+game_train
+sb_train
+
+logit_model = sm.Logit(sb_train, game_train)
+result = logit_model.fit(maxiter = 1000)
 print(result.summary())
 
 
