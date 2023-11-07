@@ -12,7 +12,7 @@ def HA_helper(x, stat_col, status_col):
 
 
 def filter_home_away_stats(data):
-    include = data.apply(lambda x: HA_helper(x, "stat", "status"), axis = 1)
+    include = data.apply(lambda x: HA_helper(x, "stat", "home_status"), axis = 1)
     data = data[include]
     return data
 
@@ -75,8 +75,8 @@ regular_season_timeframes = {
   2004: [datetime.date(2004, 9, 9), datetime.date(2005, 1, 2)],
   2005: [datetime.date(2005, 9, 8), datetime.date(2006, 1, 1)],
   2006: [datetime.date(2006, 9, 7), datetime.date(2007, 1, 1)],
-  2007: [datetime.date(2007, 9, 6), datetime.date(2008, 12, 30)],
-  2008: [datetime.date(2008, 9, 4), datetime.date(2009, 12, 28)],
+  2007: [datetime.date(2007, 9, 6), datetime.date(2007, 12, 30)],
+  2008: [datetime.date(2008, 9, 4), datetime.date(2008, 12, 28)],
   2009: [datetime.date(2009, 9, 10), datetime.date(2010, 1, 3)],
   2010: [datetime.date(2010, 9, 9), datetime.date(2011, 1, 2)],
   2011: [datetime.date(2011, 9, 8), datetime.date(2012, 1, 1)],
@@ -85,7 +85,7 @@ regular_season_timeframes = {
   2014: [datetime.date(2014, 9, 4), datetime.date(2014, 12, 28)],
   2015: [datetime.date(2015, 9, 10), datetime.date(2016, 1, 3)],
   2016: [datetime.date(2016, 9, 8), datetime.date(2017, 1, 1)],
-  2017: [datetime.date(2017, 9, 7), datetime.date(2018, 12, 31)],
+  2017: [datetime.date(2017, 9, 7), datetime.date(2017, 12, 31)],
   2018: [datetime.date(2018, 9, 6), datetime.date(2018, 12, 30)],
   2019: [datetime.date(2019, 9, 5), datetime.date(2019, 12, 29)],
   2020: [datetime.date(2020, 9, 10), datetime.date(2021, 1, 3)],
@@ -150,7 +150,7 @@ def filter_out_postseason(data, date_col):
 def date_helper(x, date_col):
     date = x[date_col]
     for key, value in regular_season_timeframes.items():
-        if value[0] <= date <= value[1]:
+        if value[0] <= date.date() <= value[1]:
             date = key
             break
     x[date_col] = date
@@ -247,3 +247,24 @@ def add_conf(data, year_col, team_col):
     superbowl = data.apply(lambda x: conf_helper(x, year_col, team_col), axis = 1)
     data["Made_Conf_Fin"] = superbowl
     return data
+
+
+def winner_helper(x):
+    away = x["score_away"]
+    home = x["score_home"]
+    if away > home:
+        return [1,0]
+    elif away < home:
+        return [0,1]
+    else:
+        return [0,0]
+
+
+def get_winner(data):
+    x = data.apply(lambda x: winner_helper(x), axis = 1, result_type = "expand")
+    data["wins_away"] = x[0]
+    data["wins_home"] = x[1]
+    data = data.drop(["score_away", "score_home"], axis = 1)
+    return data
+
+

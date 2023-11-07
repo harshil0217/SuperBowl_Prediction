@@ -10,6 +10,9 @@ from sklearn.model_selection import StratifiedShuffleSplit
 import statsmodels.api as sm
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import precision_score
 
 
 
@@ -18,9 +21,31 @@ game_data = pd.read_csv("../Data/Processed_Data/game_data.csv")
 
 game_data
 
-game_stats = game_data[game_data.columns[:15]]
 
-game_stats = game_stats.drop(["date", "team"], axis = 1)
+game_stats = game_data[game_data.columns[2:24]]
+
+# +
+fig, ax = plt.subplots(figsize = (20,20))
+
+corr_mat = game_stats.corr()
+corr_mat
+sns.heatmap(corr_mat, annot = True)
+# -
+
+
+
+game_stats.drop(["fourth_down_conversion_attempts", "first_downs", "int", "completions", "total_yards", "rushing_attempts",
+                ], axis = 1, inplace = True)
+
+game_stats
+
+# +
+fig, ax = plt.subplots(figsize = (20,20))
+
+corr_mat = game_stats.corr()
+corr_mat
+sns.heatmap(corr_mat, annot = True)
+# -
 
 game_stats
 atts = game_stats.columns
@@ -33,7 +58,7 @@ len(wins)/len(game_stats)
 
 
 # +
-split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.2, random_state = 69)
+split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.25, random_state = 69)
 
 for train_index, test_index in split.split(game_stats, game_stats["Superbowl Status"]):
     game_train = game_stats.loc[train_index]
@@ -62,16 +87,44 @@ game_train, sb_train = smote.fit_resample(game_train, sb_train)
 game_train
 sb_train
 
-logit_model = sm.Logit(sb_train, game_train)
-result = logit_model.fit(maxiter = 1000)
+logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
+result = logit_model.fit(maxiter = 2000)
 print(result.summary())
 
+game_train.drop(["def_st_td", "fumbles", "attempts", "penalty_yards", "sack_yards"], axis = 1, inplace = True)
+game_test.drop(["def_st_td", "fumbles", "attempts", "penalty_yards", "sack_yards"], axis = 1, inplace = True)
+logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
+result = logit_model.fit(maxiter = 2000)
+print(result.summary())
 
+game_train.drop(["rushing_yards", "possession"], axis = 1, inplace = True)
+game_test.drop(["rushing_yards", "possession"], axis = 1, inplace = True)
+logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
+result = logit_model.fit(maxiter = 2000)
+print(result.summary())
+
+game_train.drop(["turnovers"], axis = 1, inplace = True)
+game_test.drop(["turnovers"], axis = 1, inplace = True)
+logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
+result = logit_model.fit(maxiter = 2000)
+print(result.summary())
+
+preds = result.predict(sm.add_constant(game_test))
+preds = round(preds)
+preds
+
+mat = confusion_matrix(sb_test, preds)
+mat
+
+prec = precision_score(sb_test, preds)
+prec
+
+print(sb_test[sb_test == 1])
 
 print(len(game_test))
 game_test
 
-logreg = LogisticRegression(penalty = "l2")
+logreg = LogisticRegression()
 
 logreg.fit(game_train, sb_train)
 
@@ -88,8 +141,7 @@ recall
 mat = confusion_matrix(sb_test, preds)
 mat
 
-param_grid = {
-    'penalty' : ['l2'], 
+param_grid = { 
     'C'       : np.logspace(-3,3,7),
     'solver'  : ['newton-cg', 'lbfgs', 'liblinear'],
 }

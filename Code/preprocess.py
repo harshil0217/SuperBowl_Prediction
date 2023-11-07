@@ -7,12 +7,15 @@ len(game_data.columns)
 
 game_data
 
+from utils import get_winner
+game_data = get_winner(game_data)
+
 game_data = pd.melt(game_data, id_vars = game_data.columns[0:3], value_vars = game_data.columns[3:39], var_name = "stat", value_name = "stat_value")
 
 game_data
 game_data
 
-game_data = pd.melt(game_data, id_vars = ["date", "stat", "stat_value"], value_vars = ["away", "home"], var_name = "status", value_name = "team")
+game_data = pd.melt(game_data, id_vars = ["date", "stat", "stat_value"], value_vars = ["away", "home"], var_name = "home_status", value_name = "team")
 
 game_data
 game_data
@@ -25,7 +28,7 @@ game_data
 
 
 
-game_data = game_data.drop(["status"], axis = 1)
+game_data = game_data.drop(["home_status"], axis = 1)
 
 
 from utils import ignore_home_away
@@ -47,34 +50,23 @@ game_data["date"] = new_dates
 
 game_data
 
-game_data = game_data.drop([ "fourth_downs", "possession", "fumbles", "int", "redzone"], axis = 1)
+
 
 game_data
 
-from utils import turn_into_percent
-comp_perc = game_data["comp_att"]
-comp_perc = turn_into_percent(comp_perc)
-game_data["comp_perc"] = comp_perc
-game_data.drop(["comp_att"], inplace = True, axis = 1)
+
 
 game_data
 
-from utils import simplify_to_yards
-game_data = simplify_to_yards(game_data, "penalties")
-game_data
 
-from utils import per_attempt
-game_data = per_attempt(game_data, "rushing_yards", "rushing_attempts", "yards_per_carry" )
+
+
 
 game_data
 
-game_data = simplify_to_yards(game_data, "sacks")
-game_data
 
-conv_rate = game_data["third_downs"]
-conv_rate = turn_into_percent(conv_rate)
-game_data["third_down_conversion_rate"] = comp_perc
-game_data.drop(["third_downs"], inplace = True, axis = 1)
+
+
 
 game_data
 
@@ -84,18 +76,58 @@ game_data = filter_out_postseason(game_data, "date")
 
 game_data
 
+
+
+game_data
+
+
+
+game_data
+
+
+
+game_data
+
+
+
+# +
 from utils import simplify_date
+
 game_data = simplify_date(game_data, "date")
+game_data
+# -
 
+game_data = game_data.drop(["redzone"], axis = 1)
+
+# +
+game_data[["completions", "attempts"]] = game_data["comp_att"].str.split("-", expand = True)
+game_data[["fourth_down_conversions", "fourth_down_conversion_attempts"]] = game_data["fourth_downs"].str.split("-", expand = True)
+game_data[["penalties", "penalty_yards"]] = game_data["penalties"].str.split("-", expand = True)
+game_data[["sacks", "sack_yards"]] = game_data["sacks"].str.split("-", expand = True)
+game_data[["third_down_conversions", "third_down_attempts"]] = game_data["third_downs"].str.split("-", expand = True)
+
+game_data.drop(["comp_att", "fourth_downs", "penalties", "sacks", "third_downs"], axis = 1, inplace = True)
+game_data
+# -
+
+len(game_data.columns)
+
+vals = game_data["possession"].str.split(":", expand = True)
+game_data["possession"] = pd.to_numeric(vals[0]) + pd.to_numeric(vals[1])/60
 game_data
 
-game_data = game_data.groupby(["date", "team"]).mean()
-
+# +
+for i in range(2,len(game_data.columns)):
+    game_data[game_data.columns[i]] = pd.to_numeric(game_data[game_data.columns[i]])
+    
 game_data
+# -
 
+game_data = game_data.groupby(["date", "team"]).sum()
 game_data = game_data.reset_index()
-
 game_data
+
+
 
 # +
 from utils import add_superbowl
@@ -103,14 +135,11 @@ from utils import add_superbowl
 game_data = add_superbowl(game_data, "date", "team")
 game_data
 # -
-game_data = game_data.drop(["drives", "rushing_attempts", "comp_perc", "third_down_conversion_rate" ], axis = 1)
 
 
-# +
-#from utils import add_conf
 
-#game_data = add_conf(game_data, "date", "team")
-#game_data
-# -
+
 
 game_data.to_csv("..//Data/Processed_Data/game_data.csv", index = False)
+
+
