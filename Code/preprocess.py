@@ -1,3 +1,14 @@
+"""
+The following code transforms a dataset documenting the stats of every nfl game from 2002 to 2022 into a regular season
+summary for each team for each year. In other words, individual game stats are grouped and aggregated based on the regular
+season and team they belong to. Post season games are removed from the data since the model aims to predict the winner of 
+the superbowl based on regular season performance. 
+
+Dataset citation: 
+
+cviaxmiwnptr. ()
+"""
+
 import pandas as pd
 import utils
 

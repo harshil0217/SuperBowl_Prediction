@@ -58,7 +58,7 @@ len(wins)/len(game_stats)
 
 
 # +
-split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.25, random_state = 69)
+split = StratifiedShuffleSplit(n_splits = 1, test_size = 0.2, random_state = 69)
 
 for train_index, test_index in split.split(game_stats, game_stats["Superbowl Status"]):
     game_train = game_stats.loc[train_index]
@@ -97,24 +97,30 @@ logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
 result = logit_model.fit(maxiter = 2000)
 print(result.summary())
 
-game_train.drop(["rushing_yards", "possession"], axis = 1, inplace = True)
-game_test.drop(["rushing_yards", "possession"], axis = 1, inplace = True)
-logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
-result = logit_model.fit(maxiter = 2000)
-print(result.summary())
 
-game_train.drop(["turnovers"], axis = 1, inplace = True)
-game_test.drop(["turnovers"], axis = 1, inplace = True)
-logit_model = sm.Logit(sb_train, sm.add_constant(game_train))
-result = logit_model.fit(maxiter = 2000)
-print(result.summary())
+
+
 
 preds = result.predict(sm.add_constant(game_test))
 preds = round(preds)
-preds
 
 mat = confusion_matrix(sb_test, preds)
 mat
+
+nfl_2022 = game_data[game_data["date"] == 2022]
+nfl_2022_stats = nfl_2022.drop(["date", "team"], axis = 1)
+nfl_2022_stats = nfl_2022_stats.drop(["def_st_td", "fumbles", "attempts", "penalty_yards", "sack_yards", "fourth_down_conversion_attempts", "first_downs", 
+                                      "int", "completions", "total_yards", "rushing_attempts", "Superbowl Status"], axis = 1)
+nfl_2022_stats
+
+
+pred2022 = result.predict(sm.add_constant(nfl_2022_stats))
+pred2022
+
+nfl_2022["winner%"] = pred2022
+nfl_2022
+
+nfl_2022.sort_values("winner%", ascending = False)
 
 prec = precision_score(sb_test, preds)
 prec
