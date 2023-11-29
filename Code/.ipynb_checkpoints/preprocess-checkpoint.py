@@ -19,18 +19,13 @@ len(game_data.columns)
 
 game_data
 
-game_data["allowed_away"] = game_data["score_home"]
-game_data["allowed_home"] = game_data["score_away"]
-game_data
-
 from utils import get_winner
 game_data = get_winner(game_data)
 
+game_data = pd.melt(game_data, id_vars = game_data.columns[0:3], value_vars = game_data.columns[3:39], var_name = "stat", value_name = "stat_value")
+
 game_data
-
-game_data = pd.melt(game_data, id_vars = game_data.columns[0:3], value_vars = game_data.columns[3:43], var_name = "stat", value_name = "stat_value")
-
-
+game_data
 
 game_data = pd.melt(game_data, id_vars = ["date", "stat", "stat_value"], value_vars = ["away", "home"], var_name = "home_status", value_name = "team")
 
@@ -119,8 +114,8 @@ game_data = game_data.drop(["redzone"], axis = 1)
 # +
 game_data[["completions", "attempts"]] = game_data["comp_att"].str.split("-", expand = True)
 game_data[["fourth_down_conversions", "fourth_down_conversion_attempts"]] = game_data["fourth_downs"].str.split("-", expand = True)
-game_data[["penalties_number", "penalty_yards"]] = game_data["penalties"].str.split("-", expand = True)
-game_data[["sacks_number", "sack_yards"]] = game_data["sacks"].str.split("-", expand = True)
+game_data[["penalties", "penalty_yards"]] = game_data["penalties"].str.split("-", expand = True)
+game_data[["sacks", "sack_yards"]] = game_data["sacks"].str.split("-", expand = True)
 game_data[["third_down_conversions", "third_down_attempts"]] = game_data["third_downs"].str.split("-", expand = True)
 
 game_data.drop(["comp_att", "fourth_downs", "penalties", "sacks", "third_downs"], axis = 1, inplace = True)

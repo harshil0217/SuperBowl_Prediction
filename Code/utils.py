@@ -2,6 +2,17 @@ import datetime
 
 
 def HA_helper(x, stat_col, status_col):
+    """Check if home/away status matches stat column
+    
+    Args:
+        x: row from a dataframe 
+        stat_col: column name in dataframe containing home/away status statistic 
+        status_col: column name in dataframe containing current home/away status
+        
+    Returns: 
+        bool: True if home/away status matches stat_col, False otherwise
+        
+    """
     if (x[status_col] == "away"):
         if "_away" in x[stat_col]:
             return True
@@ -12,12 +23,33 @@ def HA_helper(x, stat_col, status_col):
 
 
 def filter_home_away_stats(data):
+    """Filters a dataframe to only include rows where home/away status matches stat
+    
+    Args:
+        data: Dataframe containing:
+            - stat: Column with home/away statistic 
+            - home_status: Home or away status
+            
+    Returns: 
+        Filtered dataframe where stats match home_away status
+            
+    """
     include = data.apply(lambda x: HA_helper(x, "stat", "home_status"), axis = 1)
     data = data[include]
     return data
 
 
 def ignore_helper(x, stat_col):
+    """Strips '_home' or '_away' from stat column
+    
+    Args:
+        x: Row from a dataframe
+        stat_col: Column in the dataframe containing the stat to strip
+        
+    Returns: 
+        Row with stat_col value stripped of '_home' or '_away'
+        
+    """
     name = x[stat_col]
     if "_away" in name:
         name = name[:name.index("_away")]
@@ -28,45 +60,28 @@ def ignore_helper(x, stat_col):
 
 
 def ignore_home_away(data):
+    """Strips '_home' and '_away' suffixes from 'stat' columns in dataframe
+    
+    Args:
+        data: Dataframe containing 'stat' column
+        
+    Returns:
+        Dataframe with 'stat' column values stripped of '_home' and '_away' suffixes
+        
+    """
     data = data.apply(lambda x: ignore_helper(x, "stat"), axis = 1)
     return data
 
 
-def percent_helper(x):
-    x = x.split("-")
-    val = float(x[0])/float(x[1])
-    return val
 
 
-def turn_into_percent(data):
-    data = data.apply(lambda x: percent_helper(x))
-    return data
 
 
-def simplify_helper(x, col):
-    pens = x[col]
-    pens = pens.split("-")
-    yards = pens[1]
-    x[col] = yards
-    return x
 
 
-def simplify_to_yards(data, col):
-    data = data.apply(lambda x: simplify_helper(x, col), axis = 1)
-    return data
 
 
-def attempt_helper(x, yards_col, attempt_col):
-    yards = x[yards_col]
-    attempt = x[attempt_col]
-    per = yards/attempt
-    return per
 
-
-def per_attempt(data, yards_col, attempt_col, per_col):
-    per_att = data.apply(lambda x: attempt_helper(x, yards_col, attempt_col), axis =1)
-    data[per_col] = per_att
-    return data
 
 
 regular_season_timeframes = {
@@ -120,6 +135,16 @@ season_timeframes = {
 
 # +
 def postseason_helper(x, date_col):
+    """Check if date is in regular season or postseason
+    
+    Args:
+        x (row): Row from a dataframe
+        date_col (str): Column name containing the date
+                
+    Returns:
+        bool: True if date is in postseason, False if in regular season
+            
+    """
     date = x[date_col]
     season = 0
     for key, value in season_timeframes.items():
@@ -136,6 +161,16 @@ def postseason_helper(x, date_col):
 
 # +
 def filter_out_postseason(data, date_col):
+    """Filter dataframe to only regular season data
+    
+    Args:
+        data (dataframe): Dataframe containing date_col
+        date_col (str): Column name containing the date
+        
+    Returns: 
+        Filtered dataframe containing only regular season data
+        
+    """
     keep = data.apply(lambda x: postseason_helper(x, date_col), axis = 1)
     data = data[keep]
     return data
@@ -148,6 +183,16 @@ def filter_out_postseason(data, date_col):
 # -
 
 def date_helper(x, date_col):
+    """Converts date to season year
+    
+    Args:
+        x (row): Row from a dataframe
+        date_col (str): Column containing date 
+        
+    Returns:
+        Row with date value converted to season year (e.g. 2022)
+        
+    """
     date = x[date_col]
     for key, value in regular_season_timeframes.items():
         if value[0] <= date.date() <= value[1]:
@@ -158,6 +203,16 @@ def date_helper(x, date_col):
 
 
 def simplify_date(data, date_col):
+    """Converts dates in dataframe to season years
+    
+    Args:
+        data (dataframe): Dataframe containing date_col
+        date_col (str): Column name with date values
+        
+    Returns: 
+        Dataframe with date values converted to season years 
+        
+    """
     data = data.apply(lambda x: date_helper(x, date_col), axis = 1)
     return data
 
@@ -188,6 +243,17 @@ superbowls = {
 
 
 def superbowl_helper(x, year_col, team_col):
+    """Check if a team won the Super Bowl in a given year
+    
+    Args:
+        x (row): Row from a dataframe
+        year_col (str): Column name with season year 
+        team_col (str): Column name with team name
+        
+    Returns:
+        int: 1 if team won Super Bowl in year, 0 otherwise
+        
+    """
     year = x[year_col]
     team = x[team_col]
     winner = superbowls[year]
@@ -198,6 +264,18 @@ def superbowl_helper(x, year_col, team_col):
 
 
 def add_superbowl(data, year_col, team_col):
+    """Add column indicating if team won Super Bowl that year
+    
+    Args:
+        data (dataframe): Dataframe
+        year_col (str): Season year column name
+        team_col (str): Team name column name
+        
+    Returns:
+        Dataframe with new column 'Superbowl Status' indicating 1 if team 
+        won SB that year, 0 otherwise
+    """
+    
     superbowl = data.apply(lambda x: superbowl_helper(x, year_col, team_col), axis = 1)
     data["Superbowl Status"] = superbowl
     return data
@@ -250,6 +328,18 @@ def add_conf(data, year_col, team_col):
 
 
 def winner_helper(x):
+    """Determine winner between home and away teams.
+    
+    Args:
+        x (row): Row from a dataframe containing:
+            - score_away: Away team score 
+            - score_home: Home team score
+            
+    Returns: 
+        List indicating win/loss for [away team, home team], with 1 indicating
+        a win and 0 indicating a loss. Ties return [0, 0]
+
+    """
     away = x["score_away"]
     home = x["score_home"]
     if away > home:
@@ -261,10 +351,21 @@ def winner_helper(x):
 
 
 def get_winner(data):
+    """Add win/loss columns for away and home teams
+    
+    Args:
+        data (dataframe): Dataframe containing:
+            - score_away: Away team score
+            - score_home: Home team score
+            
+    Returns: 
+        Dataframe with new columns 'wins_away' and 'wins_home' indicating
+        1 for a win and 0 for a loss or tie. Removes the score columns.
+        
+    """
     x = data.apply(lambda x: winner_helper(x), axis = 1, result_type = "expand")
     data["wins_away"] = x[0]
     data["wins_home"] = x[1]
-    data = data.drop(["score_away", "score_home"], axis = 1)
     return data
 
 
